@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kit Vendedor — AI Producer Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f2ede4;
+    --paper2: #e8e1d4;
+    --cream: #faf7f2;
+    --fire: #d94f1e;
+    --fire-dim: rgba(217,79,30,0.12);
+    --gold: #c9973a;
+    --gold-dim: rgba(201,151,58,0.15);
+    --gray: #7a7060;
+    --border: rgba(15,14,12,0.1);
+    --border-strong: rgba(15,14,12,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Syne', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.5;
+  }
+
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 48px;
+    background: rgba(242,237,228,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--fire);
+    font-weight: 500;
+  }
+
+  .nav-items {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-items a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-items a:hover { color: var(--ink); }
+
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    background: var(--ink);
+    padding: 160px 64px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(217,79,30,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-right {
+    background: var(--paper2);
+    padding: 160px 64px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    border-left: 1px solid var(--border-strong);
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--fire);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.3s ease forwards;
+  }
+
+  .hero-tag-dark { color: rgba(242,237,228,0.4); }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(56px, 8vw, 96px);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    color: var(--paper);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.5s ease forwards;
+  }
+
+  .hero h1 em { font-style: italic; color: var(--fire); }
+
+  .hero-desc {
+    font-size: 15px;
+    color: rgba(242,237,228,0.55);
+    max-width: 320px;
+    line-height: 1.8;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.7s ease forwards;
+  }
+
+  .hero-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.6s ease forwards;
+  }
+
+  .stat { padding: 28px 0; border-bottom: 1px solid var(--border); }
+  .stat:last-child { border-bottom: none; }
+
+  .stat-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -2px;
+  }
+
+  .stat-num span { color: var(--fire); }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 4px;
+  }
+
+  .hero-bottom {
+    position: absolute;
+    bottom: 40px; right: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 64px; }
+
+  .section { padding: 100px 0; border-bottom: 1px solid var(--border); }
+  .section:last-of-type { border-bottom: none; }
+
+  .section-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 2px;
+    width: 32px;
+  }
+
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--fire);
+    padding: 4px 10px;
+    border: 1px solid rgba(217,79,30,0.3);
+  }
+
+  .section h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 400;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  .section h2 em { font-style: italic; color: var(--fire); }
+
+  .section-intro {
+    font-size: 16px;
+    color: var(--gray);
+    max-width: 600px;
+    line-height: 1.8;
+    margin-bottom: 48px;
+    font-weight: 400;
+  }
+
+  .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 40px; }
+
+  .how-card {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .how-card:hover { background: var(--paper2); }
+
+  .how-card::before {
+    content: attr(data-n);
+    position: absolute;
+    top: -20px; right: 20px;
+    font-family: 'Instrument Serif', serif;
+    font-size: 120px;
+    font-weight: 400;
+    color: rgba(15,14,12,0.04);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .how-icon { font-size: 32px; margin-bottom: 20px; }
+
+  .how-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+
+  .how-card p { font-size: 14px; color: var(--gray); line-height: 1.8; }
+
+  .table-container { margin-top: 48px; border: 1px solid var(--border-strong); overflow: hidden; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--ink); }
+
+  th {
+    padding: 18px 28px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(242,237,228,0.6);
+    font-weight: 400;
+  }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  tbody tr:hover { background: var(--paper2); }
+  tbody tr:last-child { border-bottom: none; }
+
+  td { padding: 20px 28px; font-size: 15px; color: var(--ink); }
+  td:first-child { font-weight: 600; }
+
+  .badge {
+    display: inline-block;
+    background: var(--fire);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+  }
+
+  .badge-gold { background: var(--gold); }
+
+  .commission-note {
+    margin-top: 24px;
+    background: var(--fire-dim);
+    border: 1px solid rgba(217,79,30,0.25);
+    border-left: 4px solid var(--fire);
+    padding: 24px 28px;
+  }
+
+  .commission-note p { font-size: 15px; color: var(--ink); line-height: 1.7; }
+  .commission-note strong { color: var(--fire); }
+
+  .script-flow { display: flex; flex-direction: column; gap: 2px; margin-top: 40px; }
+
+  .script-step {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .script-step:hover { background: var(--paper2); }
+
+  .step-num-col {
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 40px;
+    font-weight: 400;
+    color: rgba(242,237,228,0.2);
+    padding: 28px 0;
+  }
+
+  .step-body { padding: 28px 32px; border-left: 1px solid var(--border); }
+
+  .step-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .step-hint { font-size: 13px; color: var(--gray); line-height: 1.6; }
+
+  .script-block {
+    background: var(--ink);
+    border: 1px solid rgba(242,237,228,0.06);
+    border-left: 4px solid var(--fire);
+    padding: 28px 32px;
+    margin: 2px 0;
+  }
+
+  .script-block-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--fire);
+    margin-bottom: 12px;
+  }
+
+  .script-block p {
+    font-family: 'Instrument Serif', serif;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.85;
+    color: rgba(242,237,228,0.85);
+  }
+
+  .script-block strong { font-style: normal; color: var(--gold); }
+
+  .objections { display: flex; flex-direction: column; gap: 2px; margin-top: 40px; }
+
+  .objection { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+
+  .obj-q { background: var(--paper2); border: 1px solid var(--border); padding: 28px 32px; }
+  .obj-a { background: var(--cream); border: 1px solid var(--border); padding: 28px 32px; }
+
+  .obj-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 10px;
+  }
+
+  .obj-a .obj-label { color: var(--fire); }
+  .obj-q p, .obj-a p { font-size: 14px; color: var(--ink); line-height: 1.7; }
+
+  .phases { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 40px; }
+
+  .phase {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    padding: 36px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .phase:hover { background: var(--paper2); }
+
+  .phase-letter {
+    font-family: 'Instrument Serif', serif;
+    font-size: 80px;
+    font-weight: 400;
+    color: rgba(217,79,30,0.1);
+    line-height: 1;
+    position: absolute;
+    top: 0; right: 16px;
+  }
+
+  .phase-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--fire);
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .phase h3 { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: var(--ink); }
+  .phase p { font-size: 13px; color: var(--gray); line-height: 1.7; }
+
+  .feedback-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-top: 40px; }
+
+  .fb-card { background: var(--cream); border: 1px solid var(--border); padding: 32px; transition: background 0.2s; }
+  .fb-card:hover { background: var(--paper2); }
+  .fb-icon { font-size: 28px; margin-bottom: 16px; display: block; }
+  .fb-card h3 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: var(--gold); }
+  .fb-card p { font-size: 13px; color: var(--gray); line-height: 1.7; }
+
+  .feedback-main { background: var(--ink); border: 1px solid rgba(242,237,228,0.08); padding: 48px; margin-bottom: 2px; }
+
+  .feedback-main h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--paper);
+    margin-bottom: 16px;
+  }
+
+  .feedback-main h3 em { font-style: italic; color: var(--fire); }
+
+  .feedback-main p { font-size: 15px; color: rgba(242,237,228,0.6); line-height: 1.8; max-width: 700px; margin-bottom: 12px; }
+  .feedback-main strong { color: var(--gold); }
+
+  .demos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 40px; }
+
+  .demo-card { background: var(--cream); border: 1px solid var(--border); padding: 24px; transition: background 0.2s; }
+  .demo-card:hover { background: var(--paper2); }
+  .demo-num { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gray); letter-spacing: 2px; margin-bottom: 10px; display: block; }
+
+  .demo-card a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--fire);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    word-break: break-all;
+    transition: opacity 0.2s;
+  }
+
+  .demo-card a:hover { opacity: 0.7; }
+
+  .footer {
+    background: var(--ink);
+    padding: 100px 64px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .footer::before {
+    content: 'VENDER';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Instrument Serif', serif;
+    font-size: 240px;
+    font-weight: 400;
+    color: rgba(242,237,228,0.02);
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .footer h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 400;
+    color: var(--paper);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .footer h2 em { font-style: italic; color: var(--fire); }
+
+  .footer p {
+    font-size: 16px;
+    color: rgba(242,237,228,0.45);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.8;
+    position: relative;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .hero-left { padding: 120px 32px 64px; }
+    .wrap { padding: 0 32px; }
+    .nav { padding: 16px 32px; }
+    .nav-items { display: none; }
+    .how-grid, .objection, .phases, .feedback-grid, .demos-grid { grid-template-columns: 1fr; }
+    .section { padding: 64px 0; }
+    .footer { padding: 64px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">AI Producer Studio</div>
+  <ul class="nav-items">
+    <li><a href="#como-funciona">Como funciona</a></li>
+    <li><a href="#comissoes">Comissões</a></li>
+    <li><a href="#roteiro">Roteiro</a></li>
+    <li><a href="#objecoes">Objeções</a></li>
+    <li><a href="#plano">Plano</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag hero-tag-dark">AI Producer Studio — Kit Vendedor</div>
+    <h1>Seu kit<br>para<br><em>vender.</em></h1>
+    <p class="hero-desc">Tudo o que você precisa para começar a fechar vendas desde o primeiro dia. Sem experiência técnica, sem convencer do zero.</p>
+  </div>
+  <div class="hero-right">
+    <div class="hero-tag">Por que funciona</div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">50<span>–</span>75<span>%</span></div>
+        <div class="stat-label">Taxa de fechamento estimada</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">20<span>%</span></div>
+        <div class="stat-label">Sua comissão por venda</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">5<span>–</span>7</div>
+        <div class="stat-label">Dias para entregar o site</div>
+      </div>
+    </div>
+    <div class="hero-bottom">AI Producer Studio</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="section" id="como-funciona">
+  <div class="section-meta">
+    <span class="section-num">01</span>
+    <span class="section-tag">O processo</span>
+  </div>
+  <h2>Como <em>funciona</em></h2>
+  <p class="section-intro">Você não precisa explicar tecnologia nem convencer do zero. O produto já existe quando você chega na ligação — só mostra e pergunta.</p>
+
+  <div class="how-grid">
+    <div class="how-card" data-n="1">
+      <div class="how-icon">🔍</div>
+      <h3>Identificamos o cliente</h3>
+      <p>Buscamos negócios locais que não têm site ou têm presença digital fraca. Já levantamos o contato e entregamos a lista pronta pra você ligar.</p>
+    </div>
+    <div class="how-card" data-n="2">
+      <div class="how-icon">🏗️</div>
+      <h3>O site já está feito</h3>
+      <p>Antes de você ligar, já criamos uma versão do site para aquele negócio específico. Você entra na ligação com o produto na mão.</p>
+    </div>
+    <div class="how-card" data-n="3">
+      <div class="how-icon">📞</div>
+      <h3>Você faz a ligação</h3>
+      <p>Liga, manda o demo pelo WhatsApp, e pergunta se querem ativar. O cliente vê o próprio negócio numa página profissional antes de pagar qualquer coisa.</p>
+    </div>
+    <div class="how-card" data-n="4">
+      <div class="how-icon">💰</div>
+      <h3>Fecha e recebe</h3>
+      <p>Se o cliente diz sim, você pega os dados e coordena o pagamento. Sua comissão de 20% é paga quando o cliente faz a entrada de 50%.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="comissoes">
+  <div class="section-meta">
+    <span class="section-num">02</span>
+    <span class="section-tag">Quanto você ganha</span>
+  </div>
+  <h2>Sua <em>comissão.</em></h2>
+  <p class="section-intro">Sempre 20% do que você fechar. Independente do produto. Paga quando o cliente faz o pagamento inicial de 50%.</p>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Preço ao cliente</th>
+          <th>Sua comissão (20%)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Landing Page básica</td>
+          <td>R$ 800 – 1.200</td>
+          <td>R$ 160 – 240</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Site completo</td>
+          <td>R$ 1.500 – 2.500</td>
+          <td>R$ 300 – 500</td>
+          <td><span class="badge">Recomendado</span></td>
+        </tr>
+        <tr>
+          <td>Pack Premium</td>
+          <td>R$ 2.500 – 4.000</td>
+          <td>R$ 500 – 800</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Manutenção mensal</td>
+          <td>R$ 150 – 300/mês</td>
+          <td>R$ 30 – 60/mês</td>
+          <td><span class="badge badge-gold">Recorrente</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="commission-note">
+    <p>Sua comissão é sempre <strong>20% do valor fechado</strong>, independente do produto. Clientes com manutenção mensal geram <strong>renda recorrente</strong> — você recebe todo mês enquanto o cliente continuar ativo.</p>
+  </div>
+</div>
+
+<div class="section" id="roteiro">
+  <div class="section-meta">
+    <span class="section-num">03</span>
+    <span class="section-tag">Roteiro de venda</span>
+  </div>
+  <h2>A ligação, <em>passo a passo.</em></h2>
+  <p class="section-intro">Não leia roboticamente. Entenda a lógica de cada parte e fale natural. O objetivo de cada passo é um só.</p>
+
+  <div class="script-flow">
+
+    <div class="script-step">
+      <div class="step-num-col">1</div>
+      <div class="step-body">
+        <div class="step-title">Abertura — primeiros 15 segundos</div>
+        <div class="step-hint">Objetivo: que não desliguem. Seja direto, humano, sem enrolação.</div>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-block-label">📞 Você fala isso</div>
+      <p>"Bom dia, falo com <strong>[nome do dono/a]</strong>? … Perfeito. Ligo porque trabalho com um estúdio de design web e notamos que seu negócio <strong>[nome do negócio]</strong> não aparece bem no Google — ou diretamente não tem página web. Tem 2 minutos pra eu explicar como podemos ajudar?"</p>
+    </div>
+
+    <div class="script-step">
+      <div class="step-num-col">2</div>
+      <div class="step-body">
+        <div class="step-title">O golpe visual — manda o demo</div>
+        <div class="step-hint">Aqui está a mágica. Manda o link do site <em>enquanto fala</em>. Silêncio. Espera ele abrir.</div>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-block-label">💬 Enquanto manda o link pelo WhatsApp</div>
+      <p>"Acabei de te mandar um WhatsApp com o link. <strong>É uma página que fizemos especificamente pro seu negócio</strong> — com os serviços que você oferece, informações de contato, e um botão direto de WhatsApp pra seus clientes te encontrarem. Consegue abrir um momento?"</p>
+    </div>
+
+    <div class="script-step">
+      <div class="step-num-col">3</div>
+      <div class="step-body">
+        <div class="step-title">Diagnóstico — faz perguntas</div>
+        <div class="step-hint">Não venda ainda. Entenda o problema. O cliente tem que falar mais que você.</div>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-block-label">💬 Perguntas-chave</div>
+      <p>
+        "Hoje como você consegue novos clientes?"<br><br>
+        "Tem página web ou redes sociais ativas?"<br><br>
+        "Se um cliente novo buscar <strong>[tipo de negócio]</strong> no Google, ele encontra seu negócio?"<br><br>
+        "Quanto custaria perder 5 clientes por mês porque não te encontram online?"
+      </p>
+    </div>
+
+    <div class="script-step">
+      <div class="step-num-col">4</div>
+      <div class="step-body">
+        <div class="step-title">Proposta — simples e visual</div>
+        <div class="step-hint">Não dê detalhes técnicos. Fale de resultados. Use exemplos concretos.</div>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-block-label">🎯 Você fala isso</div>
+      <p>"Olha, o que a gente faz é uma página web profissional pro seu negócio — em menos de uma semana tá no ar. Quando alguém busca <strong>[serviço]</strong> em <strong>[cidade]</strong>, você aparece. A página tem botão direto de WhatsApp, formulário de contato, fotos, tudo. O cliente vê seu negócio, confia, e te liga. Faz sentido isso pra você?"</p>
+    </div>
+
+    <div class="script-step">
+      <div class="step-num-col">5</div>
+      <div class="step-body">
+        <div class="step-title">Preço — depois que disserem "sim" ao valor</div>
+        <div class="step-hint">Nunca dê o preço antes do cliente ver o valor. Primeiro o sim pro problema, depois o preço.</div>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-block-label">💰 Como apresentar o preço</div>
+      <p>"O investimento pra ter tudo isso funcionando é de <strong>R$ [preço]</strong>, em duas partes: 50% pra começar e 50% quando entregamos a página pronta. Pro que pode trazer de clientes novos, se paga no primeiro mês."</p>
+    </div>
+
+    <div class="script-step">
+      <div class="step-num-col">6</div>
+      <div class="step-body">
+        <div class="step-title">Fechamento — peça o compromisso</div>
+        <div class="step-hint">Não espera o cliente fechar sozinho. Faz a pergunta direta.</div>
+      </div>
+    </div>
+
+    <div class="script-block">
+      <div class="script-block-label">✅ Fecha assim</div>
+      <p>"Que tal eu te mandar um WhatsApp com mais exemplos de páginas que fizemos? Se você gostar do que ver, a gente avança essa semana e em 5-7 dias já tem sua página no ar."<br><br>
+      — Se disser sim: <strong>Pega o número, manda exemplos hoje mesmo.</strong><br>
+      — Se pedir pra pensar: <strong>"Claro. Posso te ligar na quinta no mesmo horário?"</strong></p>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" id="objecoes">
+  <div class="section-meta">
+    <span class="section-num">04</span>
+    <span class="section-tag">Objeções</span>
+  </div>
+  <h2>Quando dizem<br><em>"mas…"</em></h2>
+  <p class="section-intro">Cada objeção é uma oportunidade. Não argumente — pergunte e redirecione.</p>
+
+  <div class="objections">
+
+    <div class="objection">
+      <div class="obj-q">
+        <div class="obj-label">🚫 Dizem</div>
+        <p>"Já tenho Facebook/Instagram, não preciso de site."</p>
+      </div>
+      <div class="obj-a">
+        <div class="obj-label">✅ Você responde</div>
+        <p>"As redes são ótimas, mas o Google é diferente: quando alguém busca ativamente seu serviço, aparece uma página web, não um perfil de Instagram. São canais distintos — os dois necessários."</p>
+      </div>
+    </div>
+
+    <div class="objection">
+      <div class="obj-q">
+        <div class="obj-label">🚫 Dizem</div>
+        <p>"Tá caro."</p>
+      </div>
+      <div class="obj-a">
+        <div class="obj-label">✅ Você responde</div>
+        <p>"Entendo. Quanto vale pra você conseguir 3 clientes novos por mês? Se a página trouxer isso, já se pagou. Quer ver se faz sentido?"</p>
+      </div>
+    </div>
+
+    <div class="objection">
+      <div class="obj-q">
+        <div class="obj-label">🚫 Dizem</div>
+        <p>"Vou pensar."</p>
+      </div>
+      <div class="obj-a">
+        <div class="obj-label">✅ Você responde</div>
+        <p>"Claro. O que falta pra você decidir? Assim te mando exatamente o que precisa." — Sempre feche a ligação com uma data de retorno.</p>
+      </div>
+    </div>
+
+    <div class="objection">
+      <div class="obj-q">
+        <div class="obj-label">🚫 Dizem</div>
+        <p>"Como sei que vão fazer um bom trabalho?"</p>
+      </div>
+      <div class="obj-a">
+        <div class="obj-label">✅ Você responde</div>
+        <p>"Você já viu o trabalho — tá olhando a página agora mesmo. Não estamos vendendo uma promessa, estamos mostrando o resultado terminado."</p>
+      </div>
+    </div>
+
+    <div class="objection">
+      <div class="obj-q">
+        <div class="obj-label">🚫 Dizem</div>
+        <p>"Não sei se funciona pro meu ramo."</p>
+      </div>
+      <div class="obj-a">
+        <div class="obj-label">✅ Você responde</div>
+        <p>"Te mostro exemplos de negócios parecidos com o seu. Que tipo de cliente você quer atrair? Com isso em 2 minutos te digo se faz sentido."</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" id="plano">
+  <div class="section-meta">
+    <span class="section-num">05</span>
+    <span class="section-tag">Plano de escala</span>
+  </div>
+  <h2>Como <em>começamos.</em></h2>
+  <p class="section-intro">Duas semanas de teste. Sem pressão, sem meta impossível. Só pra ver como você se sente com o processo.</p>
+
+  <div class="phases">
+    <div class="phase">
+      <span class="phase-letter">A</span>
+      <span class="phase-tag">Fase 1</span>
+      <h3>Teste</h3>
+      <p>Primeiras 3–4 vendas. Liga pra negócios locais que você já conhece ou da sua região. Grava TODAS as ligações. Meta: fechar 3 vendas no primeiro mês.</p>
+    </div>
+    <div class="phase">
+      <span class="phase-letter">B</span>
+      <span class="phase-tag">Fase 2</span>
+      <h3>Feedback</h3>
+      <p>Manda as gravações. Com IA analisamos cada ligação: o que funcionou, o que mudar no tom, como melhorar o fechamento. Uma sessão de revisão por semana.</p>
+    </div>
+    <div class="phase">
+      <span class="phase-letter">C</span>
+      <span class="phase-tag">Fase 3</span>
+      <h3>Escala</h3>
+      <p>Com o processo validado, aumentamos o volume. Definimos juntos quantas ligações por dia são manejáveis. Começamos a mirar em ramos maiores.</p>
+    </div>
+    <div class="phase">
+      <span class="phase-letter">D</span>
+      <span class="phase-tag">Fase 4</span>
+      <h3>Recorrente</h3>
+      <p>Cada venda com manutenção mensal é renda permanente pros dois. Objetivo em 6 meses: base de clientes que paguem mensalmente.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-meta">
+    <span class="section-num">06</span>
+    <span class="section-tag">Sistema de melhoria</span>
+  </div>
+  <h2>Por que gravar<br><em>cada ligação.</em></h2>
+
+  <div class="feedback-main">
+    <h3>Não é pra controle. É pra <em>melhorar.</em></h3>
+    <p>As melhores vendas se constroem analisando o que funcionou. Com IA podemos ouvir suas ligações, identificar os momentos onde o cliente hesitou, e te dar melhorias concretas.</p>
+    <p><strong>Como funciona:</strong> Você grava a ligação (no Android: gravação automática via Ajustes ou app nativo; no iPhone: TapeACall ou similar). No final da semana manda as gravações pelo WhatsApp. Em 24 horas você tem feedback escrito com os pontos específicos a melhorar.</p>
+    <p>Não é sobre falar perfeito — é sobre melhorar 10% por semana. Em um mês você tem um pitch muito mais sólido.</p>
+  </div>
+
+  <div class="feedback-grid">
+    <div class="fb-card">
+      <span class="fb-icon">🎯</span>
+      <h3>O que se analisa</h3>
+      <p>Tom de abertura, velocidade, manejo de objeções, momento em que você apresenta o preço, como você fecha ou deixa aberto o seguimento.</p>
+    </div>
+    <div class="fb-card">
+      <span class="fb-icon">📈</span>
+      <h3>O que melhora</h3>
+      <p>Taxa de conversão, qualidade de leads gerados, tempo médio até o fechamento. Tudo medido com dados reais, não com intuição.</p>
+    </div>
+    <div class="fb-card">
+      <span class="fb-icon">🤝</span>
+      <h3>Check semanal</h3>
+      <p>Uma conversa curta por semana (WhatsApp ou chamada) pra revisar números, ajustar estratégia se precisar, e celebrar o que funcionou.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-meta">
+    <span class="section-num">07</span>
+    <span class="section-tag">Páginas demo</span>
+  </div>
+  <h2>Exemplos que<br><em>você pode mostrar.</em></h2>
+  <p class="section-intro">Use esses links como referência visual quando o cliente quiser ver seu trabalho. Manda pelo WhatsApp durante a ligação.</p>
+
+  <div class="demos-grid">
+    <div class="demo-card"><span class="demo-num">01</span><a href="https://eydok.netlify.app/" target="_blank">eydok.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">02</span><a href="https://josycunha.netlify.app/" target="_blank">josycunha.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">03</span><a href="https://paludoarq.netlify.app/" target="_blank">paludoarq.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">04</span><a href="https://premiumestetica.netlify.app/" target="_blank">premiumestetica.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">05</span><a href="https://aesba-clubbeneficios-ver1.netlify.app/" target="_blank">aesba-clubbeneficios</a></div>
+    <div class="demo-card"><span class="demo-num">06</span><a href="https://lotusbelleza.netlify.app/" target="_blank">lotusbelleza.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">07</span><a href="https://harmoniza.netlify.app/" target="_blank">harmoniza.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">08</span><a href="https://marcelasilva1.netlify.app/" target="_blank">marcelasilva1.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">09</span><a href="https://korper1.netlify.app/" target="_blank">korper1.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">10</span><a href="https://allpetsok.netlify.app/" target="_blank">allpetsok.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">11</span><a href="https://bhmecanicaok.netlify.app/" target="_blank">bhmecanicaok.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">12</span><a href="https://dombarberiaok.netlify.app/" target="_blank">dombarberiaok.netlify.app</a></div>
+    <div class="demo-card"><span class="demo-num">13</span><a href="https://drsabrinaescoutook.netlify.app/" target="_blank">drsabrinaescoutook</a></div>
+    <div class="demo-card"><span class="demo-num">14</span><a href="https://executivebarberia.netlify.app/" target="_blank">executivebarberia</a></div>
+    <div class="demo-card"><span class="demo-num">15</span><a href="https://greicy-garcia.vercel.app/" target="_blank">greicy-garcia.vercel.app</a></div>
+    <div class="demo-card"><span class="demo-num">16</span><a href="https://catalan-alpha.vercel.app/" target="_blank">catalan-alpha.vercel.app</a></div>
+    <div class="demo-card"><span class="demo-num">17</span><a href="https://clinica-estetica-santiago.vercel.app/" target="_blank">clinica-estetica-santiago</a></div>
+    <div class="demo-card"><span class="demo-num">18</span><a href="https://nkmb-coffee.vercel.app/" target="_blank">nkmb-coffee.vercel.app</a></div>
+    <div class="demo-card"><span class="demo-num">19</span><a href="https://arq-vision-nu.vercel.app/" target="_blank">arq-vision-nu.vercel.app</a></div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <h2>Você tem o demo.<br><em>Agora feche.</em></h2>
+  <p>Você não está vendendo uma promessa. Está mostrando algo real, terminado, com o nome do negócio. Seu único trabalho é fazer a ligação e perguntar: gostaria de ter isso ativo?</p>
+</div>
+
+</body>
+</html>
